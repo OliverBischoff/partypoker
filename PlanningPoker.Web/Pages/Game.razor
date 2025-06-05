@@ -19,10 +19,16 @@
     {
         <div class="row mt-3">
             <div class="col-auto">
-                <button class="btn btn-primary" disabled="@(this.Game.CurrentRound == null || this.Game.CurrentRound.Cards.Any() == false || this.Game.CurrentRound.IsRevealed == true)" @onclick="this.RevealCards">🃏 Reveal Cards</button>
+                <button class="btn btn-primary" disabled="@(this.Game.CurrentRound == null || this.Game.CurrentRound.Cards.Any() == false || this.Game.CurrentRound.IsRevealed == true || !(this.Player?.IsPlaying ?? false))" @onclick="this.RevealCards">🃏 Reveal Cards</button>
             </div>
+            @if (this.Player is not null)
+            {
+                <div class="col-auto">
+                    <button class="btn btn-primary" disabled="@(this.Game.CurrentRound?.IsRevealed == true)" @onclick="this.SwitchPlayStatus">@(this.Player!.IsPlaying ? "👁 Spectate" : "🃏 Play")</button>
+                </div>
+            }
             <div class="col-auto">
-                <button class="btn btn-success" disabled="@(this.Game.CurrentRound?.IsRevealed == false)" @onclick="this.StartNewRound">✅ Start Round @(1 + this.Game.RoundNumber)</button>
+                <button class="btn btn-success" disabled="@(this.Game.CurrentRound?.IsRevealed == false || !(this.Player?.IsPlaying ?? false))" @onclick="this.StartNewRound">✅ Start Round @(1 + this.Game.RoundNumber)</button>
             </div>
             <div class="col-auto">
                 <button class="btn btn-info" @onclick="this.PlayBingSound">🔊 Play Bing Sound</button>
@@ -35,89 +41,127 @@
 
     @if (this.Game?.CurrentRound != null)
     {
-        <div class="row mt-3">
-            <div class="col">
-                @foreach (var player in this.Game.Players)
-                {
-                    <div class="player-container">
-                        <div class="player-notify">
-                            <a href="javascript:void(0);" @onclick="(() => this.PlayBingSoundForPlayer(player))">🔊</a>
-                        </div>
+        @if (this.Game.Players.Count > 0)
+        {
+            <div class="row mt-3">
+                <div class="col">
+                    <h4>Players</h4>
+                    @foreach (var player in this.Game.Players)
+                    {
+                        <div class="player-container">
+                            <div class="player-notify">
+                                <a href="javascript:void(0);" @onclick="(() => this.PlayBingSoundForPlayer(player))">🔊</a>
+                            </div>
 
-                        <div class="player">
-                            @player.Name
-                        </div>
+                            <div class="player">
+                                @player.Name
+                            </div>
 
-                        <div class="player-card">
-                            @if (this.Game.CurrentRound.Cards.ContainsKey(player) == true)
-                            {
-                                if (this.Game.CurrentRound.IsRevealed == true)
+                            <div class="player-card">
+                                @if (this.Game.CurrentRound.Cards.ContainsKey(player) == true)
                                 {
-                                    <div class="player-card-revealed">
-                                        @this.Game.CurrentRound.Cards[player]
-                                    </div>
+                                    if (this.Game.CurrentRound.IsRevealed == true)
+                                    {
+                                        <div class="player-card-revealed">
+                                            @this.Game.CurrentRound.Cards[player]
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        @:🃏
+                                    }
                                 }
                                 else
                                 {
-                                    @:🃏
+                                    @:❌
                                 }
-                            }
-                            else
-                            {
-                                @:❌
-                            }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
 
+        <div class="row mt-3">
+            <div class="col">
+                @if (this.Game != null && this.Game.CurrentRound != null && this.Player != null && this.Game.Players.Any() && !this.Game.CurrentRound.IsRevealed)
+                {
+                    if (this.Player.IsPlaying)
+                    {
+                        @foreach (var card in this.Game.CardDeck)
+                        {
+                            <button class="btn btn-outline-secondary mr-2" @onclick="(() => this.VoteCard(card))">
+                                @if (card == this.CardChoosenInCurrentRound)
+                                {
+                                    <strong style="color: white;">
+                                        @card
+                                    </strong>
+                                }
+                                else
+                                {
+                                    @card
+                                }
+                            </button>
+                        }
+                    }
+                }
+            </div>
+        </div>
+
+        @if (this.Game.Spectators.Count > 0)
+        {
+            <div class="row mt-3">
+                <div class="col">
+                    <h4>Spectators</h4>
+                    <br />
+                    @foreach (var spectator in this.Game.Spectators)
+                    {
+                        <div class="player-container">
+                            <div class="player-notify">
+                                <a href="javascript:void(0);" @onclick="(() => this.PlayBingSoundForPlayer(spectator))">🔊</a>
+                            </div>
+
+                            <div class="player">
+                                @spectator.Name
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <div class="row mt-3">
+            <div class="col">
+                @if (this.Game != null && this.Game.CurrentRound != null && this.Player != null && this.Game.Players.Any() && this.Game.CurrentRound.IsRevealed)
+                {
+                    <div class="mt-3"><h4>Result:</h4></div>
+                    <div class="mt-3"><h5 style="margin-top:10px">Card counts</h5></div>
+                    <div class="mt-3">
+                        <div class="col">
+                            @foreach (var selectedCard in this.Game.CurrentRound.Cards
+                            .GroupBy(c => c.Value)
+                            .OrderByDescending(k => k.Count())
+                            .ThenBy(k => double.TryParse(k.Key, out var parsedValue) ? parsedValue : 0))
+                            {
+                                <div class="row">
+                                    <div class="col-1">
+                                        @($"🃏 {selectedCard.Key}")
+                                    </div>
+                                    <div class="col-auto">
+                                        =
+                                    </div>
+                                    <div class="col-auto">
+                                        @($"{selectedCard.Count()}")
+                                    </div>
+                                </div>
+                            }
                         </div>
                     </div>
+                    <div class="mt-3">@($"Total votes: {this.Game.CurrentRound.Cards.Count()}")</div>
+                    <div>@($"Highest vote(s): {string.Join(", ", this.Game.CurrentRound.HighestCardsWithPlayer.Select(c => c.Player.Name))}")</div>
+                    <div>@($"Lowest vote(s): {string.Join(", ", this.Game.CurrentRound.LowestCardsWithPlayer.Select(c => c.Player.Name))}")</div>
                 }
             </div>
         </div>
     }
-
-    <div class="row mt-3">
-        <div class="col">
-            @if (this.Game != null && this.Game.CurrentRound != null && this.Player != null)
-            {
-                if (!this.Game.CurrentRound.IsRevealed)
-                {
-                    @foreach (var card in this.Game.CardDeck)
-                    {
-                        <button class="btn btn-outline-secondary mr-2" @onclick="(() => this.VoteCard(card))">
-                            @if (card == this.CardChoosenInCurrentRound)
-                            {
-                                <strong style="color: white;">
-                                    @card
-                                </strong>
-                            }
-                            else
-                            {
-                                @card
-                            }
-                        </button>
-                    }
-                }
-                else
-                {
-                    <br />
-                    <h4>Result:</h4>
-                    <br />
-                    <h5>Card counts</h5>
-                    foreach (var selectedCard in this.Game.CurrentRound.Cards
-                        .GroupBy(c => c.Value)
-                        .OrderByDescending(k => k.Count())
-                        .ThenBy(k => double.Parse(k.Key)))
-                    {
-                        @($"🃏 {selectedCard.Key} = {selectedCard.Count()}")
-                        <br />
-                    }
-                    <br />
-                    @($"Total votes: {this.Game.CurrentRound.Cards.Count}")
-                    <br />
-                    @($"Highest vote(s): {string.Join(", ", this.Game.CurrentRound.HighestCardsWithPlayer.Select(c => c.Player.Name))}")
-                    <br />
-                    @($"Lowest vote(s): {string.Join(", ", this.Game.CurrentRound.LowestCardsWithPlayer.Select(c => c.Player.Name))}")
-                }
-            }
-        </div>
-    </div>
 </div>

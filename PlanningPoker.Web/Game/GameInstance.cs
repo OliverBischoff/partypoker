@@ -21,9 +21,11 @@ namespace PlanningPoker.Web.Game
 
         public string Hash { get; private set; }
 
-        public List<Player> Players { get; } = new List<Player>();
+        public List<Player> Players { get; } = [];
 
-        public List<Round> Rounds { get; } = new List<Round>() { new Round() };
+        public List<Player> Spectators { get; } = [];
+
+        public List<Round> Rounds { get; } = [new()];
 
         public Round CurrentRound => this.Rounds.LastOrDefault();
 
@@ -75,7 +77,7 @@ namespace PlanningPoker.Web.Game
         {
             if (this.Players.Contains(player) == false)
             {
-                this.Players.Add(player);
+                return;
             }
 
             this.CurrentRound.Cards[player] = card;
@@ -101,7 +103,7 @@ namespace PlanningPoker.Web.Game
         {
             this.Players.Remove(player);
 
-            if (this.Players.Any() == false)
+            if (this.Players.Count != 0)
             {
                 GameInstance.instances.Remove(this.Hash, out var _);
             }
@@ -117,6 +119,27 @@ namespace PlanningPoker.Web.Game
         private void RaisePlaySound(string sound)
         {
             this.PlaySound?.Invoke(this, new PlaySoundEventArgs(sound));
+        }
+
+        internal void SwitchPlayStatus(Player player)
+        {
+            player.IsPlaying = !player.IsPlaying;
+
+            if(!player.IsPlaying)
+            {
+                this.Players.Remove(player);
+                this.Spectators.Add(player);
+            }
+            else
+            {
+                if(!this.Players.Contains(player))
+                {
+                    this.Players.Add(player);
+                    this.Spectators.Remove(player);
+                }
+            }
+
+            this.RaiseChanged();
         }
     }
 }

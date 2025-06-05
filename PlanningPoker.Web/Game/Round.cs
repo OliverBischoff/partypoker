@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace PlanningPoker.Web.Game
@@ -14,9 +13,9 @@ namespace PlanningPoker.Web.Game
         {
             get
             {
-                var parsedCardValues = Cards.Select(c => (player: c.Key, card: double.Parse(c.Value)));
+                var parsedCardValues = Cards.Select(c => (player: c.Key, card: double.TryParse(c.Value, out var parsedValue) ? parsedValue : double.NaN));
 
-                return [.. parsedCardValues.Where(p => p.card == parsedCardValues.Max(c => c.card)).Select(max => (max.player, max.card.ToString()))];
+                return [.. parsedCardValues.Where(p => p.card == parsedCardValues.Where(p => !double.IsNaN(p.card)).Max(c => c.card)).Select(max => (max.player, max.card.ToString()))];
             }
         }
 
@@ -24,10 +23,9 @@ namespace PlanningPoker.Web.Game
         {
             get
             {
-                var parsedCardValues = Cards.Select(c => (player: c.Key, card: double.Parse(c.Value)))
-                    .Where(p => !double.IsNaN(p.card));
+                var parsedCardValues = Cards.Select(c => (player: c.Key, card: double.TryParse(c.Value, out var parsedValue) ? parsedValue : double.NaN));
 
-                return [.. parsedCardValues.Where(p => p.card == parsedCardValues.Min(c => c.card)).Select(max => (max.player, max.card.ToString()))];
+                return [.. parsedCardValues.Where(p => p.card == parsedCardValues.Where(p => !double.IsNaN(p.card)).Min(c => c.card)).Select(max => (max.player, max.card.ToString()))];
             }
         }
     }

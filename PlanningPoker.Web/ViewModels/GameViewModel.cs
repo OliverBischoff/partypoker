@@ -135,6 +135,11 @@ namespace PlanningPoker.Web.ViewModels
             this.Game.RevealCards();
         }
 
+        protected void SwitchPlayStatus()
+        {
+            this.Game.SwitchPlayStatus(this.Player);
+        }
+
         protected async Task NameChanged(ChangeEventArgs e)
         {
             this.PlayerName = (string)e.Value;

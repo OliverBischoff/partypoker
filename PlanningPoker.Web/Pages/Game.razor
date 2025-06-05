@@ -76,22 +76,46 @@
 
     <div class="row mt-3">
         <div class="col">
-            @if (this.Game != null && this.Game.CurrentRound != null && this.Game.CurrentRound.IsRevealed == false && this.Player != null)
+            @if (this.Game != null && this.Game.CurrentRound != null && this.Player != null)
             {
-                @foreach (var card in this.Game.CardDeck)
+                if (!this.Game.CurrentRound.IsRevealed)
                 {
-                    <button class="btn btn-outline-secondary mr-2" @onclick="(() => this.VoteCard(card))">
-                        @if (card == this.CardChoosenInCurrentRound)
-                        {
-                            <strong style="color: white;">
+                    @foreach (var card in this.Game.CardDeck)
+                    {
+                        <button class="btn btn-outline-secondary mr-2" @onclick="(() => this.VoteCard(card))">
+                            @if (card == this.CardChoosenInCurrentRound)
+                            {
+                                <strong style="color: white;">
+                                    @card
+                                </strong>
+                            }
+                            else
+                            {
                                 @card
-                            </strong>
-                        }
-                        else
-                        {
-                            @card
-                        }
-                    </button>
+                            }
+                        </button>
+                    }
+                }
+                else
+                {
+                    <br />
+                    <h4>Result:</h4>
+                    <br />
+                    <h5>Card counts</h5>
+                    foreach (var selectedCard in this.Game.CurrentRound.Cards
+                        .GroupBy(c => c.Value)
+                        .OrderByDescending(k => k.Count())
+                        .ThenBy(k => double.Parse(k.Key)))
+                    {
+                        @($"🃏 {selectedCard.Key} = {selectedCard.Count()}")
+                        <br />
+                    }
+                    <br />
+                    @($"Total votes: {this.Game.CurrentRound.Cards.Count}")
+                    <br />
+                    @($"Highest vote(s): {string.Join(", ", this.Game.CurrentRound.HighestCardsWithPlayer.Select(c => c.Player.Name))}")
+                    <br />
+                    @($"Lowest vote(s): {string.Join(", ", this.Game.CurrentRound.LowestCardsWithPlayer.Select(c => c.Player.Name))}")
                 }
             }
         </div>

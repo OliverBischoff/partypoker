@@ -129,6 +129,7 @@ namespace PlanningPoker.Web.Game
             {
                 this.Players.Remove(player);
                 this.Spectators.Add(player);
+                this.CurrentRound.Cards.Remove(player);
             }
             else
             {

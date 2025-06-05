@@ -14,8 +14,14 @@ namespace PlanningPoker.Web.Game
             get
             {
                 var parsedCardValues = Cards.Select(c => (player: c.Key, card: double.TryParse(c.Value, out var parsedValue) ? parsedValue : double.NaN));
+                var parsedCardValuesWithoutNan = parsedCardValues.Where(p => !double.IsNaN(p.card));
 
-                return [.. parsedCardValues.Where(p => p.card == parsedCardValues.Where(p => !double.IsNaN(p.card)).Max(c => c.card)).Select(max => (max.player, max.card.ToString()))];
+                if (!parsedCardValuesWithoutNan.Any())
+                {
+                    return [];
+                }
+
+                return [.. parsedCardValuesWithoutNan.Where(p => p.card == parsedCardValuesWithoutNan.Max(c => c.card)).Select(max => (max.player, max.card.ToString()))];
             }
         }
 
@@ -24,8 +30,14 @@ namespace PlanningPoker.Web.Game
             get
             {
                 var parsedCardValues = Cards.Select(c => (player: c.Key, card: double.TryParse(c.Value, out var parsedValue) ? parsedValue : double.NaN));
+                var parsedCardValuesWithoutNan = parsedCardValues.Where(p => !double.IsNaN(p.card));
 
-                return [.. parsedCardValues.Where(p => p.card == parsedCardValues.Where(p => !double.IsNaN(p.card)).Min(c => c.card)).Select(max => (max.player, max.card.ToString()))];
+                if(!parsedCardValuesWithoutNan.Any())
+                {
+                    return [];
+                }
+
+                return [.. parsedCardValuesWithoutNan.Where(p => p.card == parsedCardValuesWithoutNan.Min(c => c.card)).Select(max => (max.player, max.card.ToString()))];
             }
         }
     }

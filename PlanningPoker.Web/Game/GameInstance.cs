@@ -39,6 +39,8 @@ namespace PlanningPoker.Web.Game
 
         public int SelectedCountDown { get; set; }
 
+        public int TimerSeconds { get; set; }
+
         public void NewRound()
         {
             this.Rounds.Add(new Round());
@@ -102,15 +104,30 @@ namespace PlanningPoker.Web.Game
 
         internal async Task RevealCards()
         {
+            bool soundWasPlayed = false;
+            var startTime = DateTime.Now;
             this.CurrentRound.IsRevealing = true;
-            if(SelectedCountDown != 0)
+            var endTime = DateTime.Now.AddSeconds(this.SelectedCountDown);
+
+            while (DateTime.Now < endTime)
             {
-                await Task.Delay(TimeSpan.FromSeconds(SelectedCountDown-10));
+                var timeDiff = endTime - DateTime.Now;
 
-                this.RaisePlaySound("stopwatch_1_sec");
+                TimerSeconds = (int)Math.Round(timeDiff.TotalSeconds);
+                this.RaiseChanged();
 
-                await Task.Delay(TimeSpan.FromSeconds(10));
+                if ((SelectedCountDown - timeDiff.TotalSeconds) <= 10)
+                {
+                    if (!soundWasPlayed)
+                    {
+                        soundWasPlayed = true;
+                        this.RaisePlaySound("stopwatch_1_sec");
+                    }
+                }
+
+                await Task.Delay(500);
             }
+
             this.CurrentRound.IsRevealing = true;
 
             this.CurrentRound.IsRevealed = true;
@@ -144,7 +161,7 @@ namespace PlanningPoker.Web.Game
         {
             player.IsPlaying = !player.IsPlaying;
 
-            if(!player.IsPlaying)
+            if (!player.IsPlaying)
             {
                 this.Players.Remove(player);
                 this.Spectators.Add(player);
@@ -152,7 +169,7 @@ namespace PlanningPoker.Web.Game
             }
             else
             {
-                if(!this.Players.Contains(player))
+                if (!this.Players.Contains(player))
                 {
                     this.Players.Add(player);
                     this.Spectators.Remove(player);

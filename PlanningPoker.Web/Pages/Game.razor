@@ -31,7 +31,7 @@
                         }
                     </select>
                 </div>
-                
+
             </div>
             @if (this.Player is not null)
             {
@@ -41,9 +41,6 @@
             }
             <div class="col-auto">
                 <button class="btn btn-success" disabled="@(this.Game.CurrentRound?.IsRevealed == false)" @onclick="this.StartNewRound">✅ Start Round @(1 + this.Game.RoundNumber)</button>
-            </div>
-            <div class="col-auto">
-                <button class="btn btn-info" @onclick="this.PlayBingSound">🔊 Play Bing Sound</button>
             </div>
             <div class="col-auto">
                 <a class="btn btn-info" target="_blank" href="https://t.me/share/url?url=https://planningpoker.party/@this.Hash&text=Planning%20Poker">🔗 Share via Telegram</a>
@@ -57,10 +54,13 @@
         {
             <div class="row mt-3">
                 <div class="col">
-                    <h4>Players</h4>
+                    <div class="hstack">
+                        <h4>Players</h4>
+                        <button class="btn btn-info players-notify" @onclick="this.PlayBingSound">🔊</button>
+                    </div>
                     @foreach (var player in this.Game.Players)
                     {
-                        <div class="player-container">
+                        <div style="margin-top:10px" class="player-container">
                             <div class="player-notify">
                                 <a href="javascript:void(0);" @onclick="(() => this.PlayBingSoundForPlayer(player))">🔊</a>
                             </div>
@@ -149,25 +149,19 @@
                     <div class="mt-3"><h4>Result:</h4></div>
                     <div class="mt-3"><h5 style="margin-top:10px">Card counts</h5></div>
                     <div class="mt-3">
-                        <div class="col">
+                        <table>
                             @foreach (var selectedCard in this.Game.CurrentRound.Cards
-                            .GroupBy(c => c.Value)
-                            .OrderByDescending(k => k.Count())
-                            .ThenBy(k => double.TryParse(k.Key, out var parsedValue) ? parsedValue : 0))
+                                                .GroupBy(c => c.Value)
+                                                .OrderByDescending(k => k.Count())
+                                                .ThenBy(k => double.TryParse(k.Key, out var parsedValue) ? parsedValue : 0))
                             {
-                                <div class="row">
-                                    <div class="col-1">
-                                        @($"🃏 {selectedCard.Key}")
-                                    </div>
-                                    <div class="col-auto">
-                                        =
-                                    </div>
-                                    <div class="col-auto">
-                                        @($"{selectedCard.Count()}")
-                                    </div>
-                                </div>
+                                <tr>
+                                    <td>@($"🃏 {selectedCard.Key}")</td>
+                                    <td>=</td>
+                                    <td>@($"{selectedCard.Count()}")</td>
+                                </tr>
                             }
-                        </div>
+                        </table>
                     </div>
                     <div class="mt-3">@($"Total votes: {this.Game.CurrentRound.Cards.Count()}")</div>
                     <div>@($"Highest vote(s): {string.Join(", ", this.Game.CurrentRound.HighestCardsWithPlayer.Select(c => c.Player.Name))}")</div>

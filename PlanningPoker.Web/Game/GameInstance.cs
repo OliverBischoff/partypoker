@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace PlanningPoker.Web.Game
@@ -102,34 +103,53 @@ namespace PlanningPoker.Web.Game
             this.RaisePlaySound("shuffle-cards");
         }
 
-        internal async Task RevealCards()
+        internal async Task RevealCardsWithCountdown(CancellationToken cancellationToken)
         {
+            this.CurrentRound.IsRevealing = true;
+
             bool soundWasPlayed = false;
-            var startTime = DateTime.Now;
             this.CurrentRound.IsRevealing = true;
             var endTime = DateTime.Now.AddSeconds(this.SelectedCountDown);
 
-            while (DateTime.Now < endTime)
+            try
             {
-                var timeDiff = endTime - DateTime.Now;
-
-                TimerSeconds = (int)Math.Round(timeDiff.TotalSeconds);
-                this.RaiseChanged();
-
-                if ((SelectedCountDown - timeDiff.TotalSeconds) <= 10)
+                while (!cancellationToken.IsCancellationRequested && DateTime.Now < endTime)
                 {
-                    if (!soundWasPlayed)
-                    {
-                        soundWasPlayed = true;
-                        this.RaisePlaySound("stopwatch_1_sec");
-                    }
-                }
+                    var timeDiff = endTime - DateTime.Now;
 
-                await Task.Delay(500);
+                    TimerSeconds = (int)Math.Round(timeDiff.TotalSeconds);
+                    this.RaiseChanged();
+
+                    if ((SelectedCountDown - timeDiff.TotalSeconds) <= 10)
+                    {
+                        if (!soundWasPlayed)
+                        {
+                            soundWasPlayed = true;
+                            this.RaisePlaySound("stopwatch_1_sec");
+                        }
+                    }
+
+                    await Task.Delay(500, cancellationToken);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                Console.WriteLine("Reveal countdown was canceled");
+            }
+            finally
+            {
+                this.CurrentRound.IsRevealing = false;
             }
 
-            this.CurrentRound.IsRevealing = true;
 
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                this.RevealCards();
+            }
+        }
+
+        internal void RevealCards()
+        {
             this.CurrentRound.IsRevealed = true;
             this.RaiseChanged();
             this.RaisePlaySound("turn-cards");

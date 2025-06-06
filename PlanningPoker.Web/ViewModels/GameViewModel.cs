@@ -5,6 +5,7 @@ using Microsoft.JSInterop;
 using PlanningPoker.Web.Game;
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace PlanningPoker.Web.ViewModels
@@ -28,6 +29,8 @@ namespace PlanningPoker.Web.ViewModels
         public Player Player { get; private set; }
 
         public GameInstance Game { get; private set; }
+
+        private CancellationTokenSource cancellationTokenSource;
 
         public string CardChoosenInCurrentRound
         {
@@ -130,8 +133,24 @@ namespace PlanningPoker.Web.ViewModels
             this.Game.StartNewRound();
         }
 
-        protected async Task RevealCards()
-            => await this.Game.RevealCards();
+        protected void RevealCards()
+            => this.Game.RevealCards();
+
+        protected void RevealCardsNow()
+        {
+            this.CancelCardsWithCountdown();
+            this.Game.RevealCards();
+        }
+
+        protected async Task RevealCardsWithCountdown()
+        {
+            cancellationTokenSource = new CancellationTokenSource();
+            await this.Game.RevealCardsWithCountdown(cancellationTokenSource.Token);
+            cancellationTokenSource.Dispose();
+        }
+
+        protected void CancelCardsWithCountdown()
+            => cancellationTokenSource.Cancel();
 
         protected void SwitchPlayStatus()
         {

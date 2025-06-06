@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace PlanningPoker.Web.Game
 {
@@ -10,12 +11,17 @@ namespace PlanningPoker.Web.Game
         public event EventHandler Changed;
         public event EventHandler<PlaySoundEventArgs> PlaySound;
 
-        private static readonly ConcurrentDictionary<string, GameInstance> instances = new ConcurrentDictionary<string, GameInstance>();
+        private static readonly ConcurrentDictionary<string, GameInstance> instances = new();
 
-        public static List<string[]> Decks { get; } = new List<string[]>()
-        {
-            new []{ "❓", "0", "0.5", "1", "2", "3", "5", "8", "13", "20", "40", "100", "☕" }
-        };
+        public static List<string[]> Decks { get; } =
+        [
+            ["❓", "0", "0.5", "1", "2", "3", "5", "8", "13", "20", "40", "100", "☕"]
+        ];
+
+        public List<int> RevealCountDownInSeconds { get; } =
+        [
+            0, 10, 30, 60, 120, 180,
+        ];
 
         public string[] CardDeck => GameInstance.Decks.Single();
 
@@ -30,6 +36,8 @@ namespace PlanningPoker.Web.Game
         public Round CurrentRound => this.Rounds.LastOrDefault();
 
         public int RoundNumber => this.Rounds.Count;
+
+        public int SelectedCountDown { get; set; }
 
         public void NewRound()
         {
@@ -92,8 +100,19 @@ namespace PlanningPoker.Web.Game
             this.RaisePlaySound("shuffle-cards");
         }
 
-        internal void RevealCards()
+        internal async Task RevealCards()
         {
+            this.CurrentRound.IsRevealing = true;
+            if(SelectedCountDown != 0)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(SelectedCountDown-10));
+
+                this.RaisePlaySound("stopwatch_1_sec");
+
+                await Task.Delay(TimeSpan.FromSeconds(10));
+            }
+            this.CurrentRound.IsRevealing = true;
+
             this.CurrentRound.IsRevealed = true;
             this.RaiseChanged();
             this.RaisePlaySound("turn-cards");

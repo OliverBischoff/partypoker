@@ -1,11 +1,11 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Blazored.LocalStorage;
+﻿using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using PlanningPoker.Web.Game;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace PlanningPoker.Web.ViewModels
 {
@@ -130,10 +130,8 @@ namespace PlanningPoker.Web.ViewModels
             this.Game.StartNewRound();
         }
 
-        protected void RevealCards()
-        {
-            this.Game.RevealCards();
-        }
+        protected async Task RevealCards()
+            => await this.Game.RevealCards();
 
         protected void SwitchPlayStatus()
         {

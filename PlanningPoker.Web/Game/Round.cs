@@ -9,6 +9,8 @@ namespace PlanningPoker.Web.Game
 
         public bool IsRevealed { get; set; } = false;
 
+        public bool IsRevealing { get; set; } = false;
+
         public List<(Player Player, string Card)> HighestCardsWithPlayer
         {
             get

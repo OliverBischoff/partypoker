@@ -19,12 +19,24 @@
     {
         <div class="row mt-3">
             <div class="col-auto">
-                <button class="btn btn-primary" disabled="@(this.Game.CurrentRound == null || this.Game.CurrentRound.Cards.Any() == false || this.Game.CurrentRound.IsRevealed == true)" @onclick="this.RevealCards">🃏 Reveal Cards</button>
+                <button class="btn btn-primary" disabled="@(this.Game.CurrentRound == null || this.Game.CurrentRound.Cards.Any() == false || this.Game.CurrentRound.IsRevealed == true || this.Game.CurrentRound.IsRevealing == true)" @onclick="this.RevealCards">🃏 Reveal Cards</button>
+            </div>
+            <div class="col-auto">
+                <div class="row align-items-center">
+                    <div class="col-auto">Reveal countdown:</div>
+                    <select class="form-control col" @bind="@this.Game.SelectedCountDown">
+                        @foreach (var countdown in this.Game.RevealCountDownInSeconds)
+                        {
+                            <option value="@countdown">@($"{countdown}s")</option>
+                        }
+                    </select>
+                </div>
+                
             </div>
             @if (this.Player is not null)
             {
                 <div class="col-auto">
-                    <button class="btn btn-primary" disabled="@(this.Game.CurrentRound?.IsRevealed == true)" @onclick="this.SwitchPlayStatus">@(this.Player!.IsPlaying ? "👁 Spectate" : "🃏 Play")</button>
+                    <button class="btn btn-primary" disabled="@(this.Game.CurrentRound?.IsRevealed == true || this.Game.CurrentRound.IsRevealing == true)" @onclick="this.SwitchPlayStatus">@(this.Player!.IsPlaying ? "👁 Spectate" : "🃏 Play")</button>
                 </div>
             }
             <div class="col-auto">
